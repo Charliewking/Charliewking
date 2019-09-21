@@ -1,0 +1,32 @@
+@import 'https://fonts.googleapis.com/icon?family=Material+Icons';
+@import '~@angular/material/prebuilt-themes/indigo-pink.css';
+@media (max-width: 767px) {
+    /* On small screens, the nav menu spans the full width of the screen. Leave a space for it. */
+    .body-content {
+        padding-top: 50px;
+        margin-left:25px;
+        margin-right:25px;
+    }
+}
+
+.body {
+
+}
+
+.navbar .container-fluid > .navbar-header {
+    float: left;
+    margin-right: 10px;
+}
+
+.navbar .navbar-nav {
+    float: left;
+    margin: 5px;
+}
+
+.nav > li {
+    float: left;
+}
+
+.navbar-nav {
+    flex-direction: row;
+}
