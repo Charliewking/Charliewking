@@ -1,0 +1,331 @@
+<h1>Leaderboard</h1>
+<!--<div class="row">
+    <div class="col-sm-1">R: {{ourCube.redCards}}</div>
+    <div class="col-sm-1">W: {{ourCube.whiteCards}}</div>
+    <div class="col-sm-1">U: {{ourCube.blueCards}}</div>
+    <div class="col-sm-1">G: {{ourCube.greenCards}}</div>
+    <div class="col-sm-1">B: {{ourCube.blackCards}}</div>
+    <div class="col-sm-1">A: {{ourCube.artifactCards}}</div>
+    <div class="col-sm-1">L: {{ourCube.landCards}}</div>
+</div>-->
+<!--<button class="btn" (click)="downloadButtonPush()">Download CSV</button>-->
+
+
+
+<!--<button class="btn" (click)="getDecks('Charlie')">Charlie's Decks</button>-->
+<!--<table class='table' *ngIf="decks">
+    <thead>
+        <tr>
+            <th>Deck Name</th>
+            <th>Colors?</th>
+            <th>Summary</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let deck of decks">
+            <td>{{ deck.name }}</td>
+            <td>{{ deck.color1 }}</td>
+            <td><button class="btn" (click)="getDeckCards(deck.partitionKey, deck.name)">Get Deck Cards</button></td>
+
+            <td>
+                <div class="list-group">
+                    <a class="list-group-item list-group-item-action" *ngFor="let card of deckCards">
+                        {{card.name}}
+                    </a>
+                </div>
+            </td>
+
+        </tr>
+    </tbody>
+</table>-->
+
+<div class="row">
+    <div class="col-sm-6">
+        <table class="table">
+            <tbody>
+                <tr (click)="getDecks(player.name)" *ngFor="let player of _deckService.players | playersort; let i = index" (mouseover)="hoveredPlayer=player.name" (mouseout)="hoveredPlayer=''" [ngClass]="[(hoveredPlayer == player.name) ? 'hoveredPlayer' : '', (selectedPlayer == player.name) ? 'selectedPlayer' : '' ]">
+                    <td><h3>#{{i+1}} - {{player.name}}</h3></td>
+                    <td><h3>Bo1: {{player.bo1Wins}}-{{player.bo1Losses}} ({{player.bo1WinRate}}%)</h3></td>
+                    <td><h3>Bo3: {{player.bo3Wins}}-{{player.bo3Losses}} ({{player.bo3WinRate}}%)</h3></td>
+                </tr>
+            </tbody>
+        </table>
+        <!--<select class="form-control" [(ngModel)]="deckOwner" (change)="getDecks(deckOwner)">
+        <option *ngFor="let player of _deckService.players" value="{{player.name}}">{{player.name}}</option>
+    </select>-->
+        <input class="form-control" style="width:300px;" type="text" [(ngModel)]="deckName" placeholder="New Deck Name" *ngIf="selectedPlayer != ''">
+        <span *ngIf="selectedPlayer != ''">
+            Constructed Deck?
+            <input type="checkbox" [(ngModel)]="deckConstructed">
+        </span>
+        <button [disabled]="deckName == '' || selectedPlayer == ''" class="btn btn-secondary" (click)="createNewDeck()" *ngIf="selectedPlayer != ''">Create Deck</button>
+        <!--[disabled]="!deckOwner || !deckName"-->
+    </div>
+    <div class="col-sm-6">
+        <ul class="list-group" style="max-height:200px;overflow:auto;">
+            <!--*ngIf="_deckService.decks"-->
+            <li *ngFor="let deck of _deckService.decks" class="list-group-item" (mouseover)="hoveredover=deck.name" (mouseout)="hoveredover=''" [ngClass]="[(hoveredover == deck.name) ? 'hoveredDeck' : '', (deckName == deck.name) ? 'selectedDeck' : '' ]">
+                <!-- [ngClass]="[(deckName == deck.name) ? 'selectedDeck' : '']" -->
+
+                <!--  TODO Fix this thing so when you delete a deck it goes away and resets the selected Deck to nothing -->
+
+                <a style="float:left;text-decoration:none;" (click)="setSelectedDeck(deck)"><h4 style="margin-top:2px;">{{deck.name}} (Bo1: {{deck.bo1Wins}}-{{deck.bo1Losses}} Bo3: {{deck.bo3Wins}}-{{deck.bo3Losses}})</h4></a>
+                <button style="float:left;" type="button" class="btn btn-default" (click)="_deckService.setRenameBoxFlag(deck.name)"><i class="glyphicon-pencil"></i></button>
+                <input class="form-control" type="text" *ngIf="_deckService.showRenamebox == deck.name" (keyup.enter)="_deckService.renameDeck(deck, deckRename)" placeholder="New Deck Name" [(ngModel)]="deckRename" />
+                <button style="float:left;" *ngIf="_deckService.showRenamebox == deck.name" type="button" class="btn btn-secondary" (click)="_deckService.renameDeck(deck, deckRename)">Rename</button>
+                <!--<button *ngIf="_deckService.showRenamebox == deck.name" type="button" class="btn btn-default" (click)="_deckService.showRenamebox = ''"><i class="glyphicon-pencil"></i></button>-->
+                <button style="float:right;" *ngIf="_deckService.showRenamebox == deck.name" type="button" class="btn btn-success" (click)="_deckService.duplicateDeck(deck)">Duplicate Deck</button>
+                <button style="float:right;" *ngIf="_deckService.showRenamebox == deck.name" type="button" class="btn btn-danger" (click)="removeDeck(deck)">Delete Deck</button>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<hr style="margin-top:10px;margin-bottom:10px;" />
+
+<div class="row">
+    <div class="col-sm-6" *ngIf="_deckService.selectedDeck.name != ' '">
+        <div class="row" style="margin-bottom:5%;">
+            <div class="col-md-12">
+                <textarea cols="80" type="text" class="form-control" placeholder="Notes on the Deck" [(ngModel)]="_deckService.selectedDeck.notes"></textarea>
+                <button class="btn btn-secondary" (click)="_deckService.submitDeckNotes(_deckService.selectedDeck)">Update Deck Notes</button>
+            </div>
+        </div>
+        <div class="row" style="margin-bottom:5%;">
+            <div class="col-md-12">
+                <textarea cols="80" type="text" class="form-control" placeholder="Paste from MTGGoldfish" [(ngModel)]="_deckService.pasteQuery"></textarea>
+                <button class="btn btn-secondary" (disabled)="_deckService.pasteQuery == ''" (click)="createDeckFromString(_deckService.selectedDeck, _deckService.pasteQuery)">Import MTG Goldfish</button>
+                <button class="btn btn-secondary" (disabled)="_deckService.pasteQuery == ''" (click)="createDeckFromArenaString(_deckService.selectedDeck, _deckService.pasteQuery)">Import MTG Arena</button>
+                <button class="btn btn-secondary" (click)="downloadButtonPush()">Export Decklist to CSV</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="row">
+                    <div class="col-md-6">
+                        <input style="width:300px;" class="form-control" type="text" (keyup.enter)="getCard(setQuery)" [(ngModel)]="setQuery" id="search" placeholder="Search for a Card">
+                    </div>
+                    <div class="col-md-6">
+                        <button (click)="getCard(setQuery)" class="btn btn-secondary">Search Cards</button>
+                    </div>
+                </div>
+                <div class="row" style="margin-top:15px;" *ngFor="let card of scryfallService.returnCards | cardNameFilter: queryString">
+                    <div class="card mb-3" style="margin-bottom:25px;">
+                        <div class="row no-gutters">
+                            <div class="col">
+                                <img style="min-width:200px;max-width:400px;" src={{card.image_Large}} class="card-img" alt={{card.name}}>
+                            </div>
+                            <div class="col">
+                                <div class="card-body">
+                                    <h3 class="card-title">{{card.name}}</h3>
+                                    <span class="mana" *ngFor="let mana of card.full_cost" style="margin-bottom:5px;">
+                                        <p style="position:absolute;margin-left:1px;margin-top:1px;" *ngIf="isDigit(mana)">{{mana}}</p>
+                                        <img style="height:15px;width:15px;margin-left:-3px;" [src]="getPath(mana)" />
+                                    </span>
+                                    <p class="card-text">{{card.card_Text}}</p>
+                                    <p class="card-text"></p>
+                                    <a (click)="addCardToDeck(card)" class="btn btn-primary">Add to Deck</a>
+                                    <a (click)="addCardToSideboard(card)" class="btn btn-primary">Add to Sideboard</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6">
+        <div class="row" *ngIf="_deckService.selectedDeck.name != ' '">
+            <div class="col-md-2">
+                <h3>{{_deckService.selectedDeck.name}}</h3>
+            </div>
+            <div *ngIf="this.deckConstructed" class="col-md-2">
+                {{_deckService.selectedDeck.cardCount}}/60 cards
+            </div>
+            <div *ngIf="!this.deckConstructed" class="col-md-2">
+                {{_deckService.selectedDeck.cardCount}}/40 cards
+            </div>
+            <div class="col-md-2">
+                {{_deckService.selectedDeck.landCards}} Lands
+            </div>
+            <div class="col-md-2">
+                {{_deckService.selectedDeck.creatureCount}} Creatures
+            </div>
+            <div class="col-md-2">
+                {{_deckService.selectedDeck.instantCount}}/{{_deckService.selectedDeck.sorceryCount}} Instant/Sorcery
+            </div>
+            <div class="col-md-2">
+                {{_deckService.selectedDeck.enchantmentCount}} Enchantments
+            </div>
+        </div>
+        <table class='table' *ngIf="_deckService.selectedDeck.name != ' '">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Card Name</th>
+                    <th>Colors</th>
+                    <!--<th><input type="text" [(ngModel)]="cardTextString" id="cardTextSearch" placeholder="Search"></th>-->
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let card of _deckService.selectedDeck.mainDeck | cardNameFilter: queryString | cardTextFilter: cardTextString | cmcsort; let i = index" 
+                    (mouseover)="hoveredcard=card.cardName" (mouseout)="hoveredcard=''" 
+                    [ngClass]="[(hoveredcard == card.cardName) ? 'hoveredCard' : '']">
+                    <td>
+                        <div class="row">
+                            <a class="btn btn-sm" (click)="incrementDeckCard(card, false)"><i class="glyphicon-plus"></i></a>
+                            <h4 >{{card.numberInDeck}}</h4>
+                            <a class="btn btn-sm" (click)="decrementDeckCard(card, false)"><i class="glyphicon-minus"></i></a>
+                        </div>
+                    </td>
+                    <td><a style="float:left;text-decoration:none;" (click)="setSearchQuery(card.cardName)"><h4>{{card.cardName}}</h4></a></td>
+                    <td>
+                        <div style="transform:translateY(-2px);">
+                            <mana-cost [mana]="card.mana_Cost"></mana-cost>
+                        </div>
+                    </td>
+                    <!--<td>{{card.card_Text}}</td>-->
+                </tr>
+            </tbody>
+        </table>
+        <div class="row" *ngIf="_deckService.selectedDeck.name != ' '">
+            <div class="col-md-2">
+                Sideboard
+            </div>
+            <div *ngIf="this.deckConstructed" class="col-md-2">
+                {{_deckService.selectedDeck.sideboardCount}}/15 cards
+            </div>
+        </div>
+        <table class='table' *ngIf="_deckService.selectedDeck.name != ' '">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>not sure</th>
+                    <th>Colors</th>
+                    <!--<th><input type="text" [(ngModel)]="cardTextString" id="cardTextSearch" placeholder="Search"></th>-->
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let card of _deckService.selectedDeck.sideboard | cardNameFilter: queryString | cardTextFilter: cardTextString | cmcsort; let i = index"
+                    (mouseover)="hoveredcard=card.cardName" (mouseout)="hoveredcard=''" 
+                    [ngClass]="[(hoveredcard == card.cardName) ? 'hoveredCard' : '']">
+                    <td>
+                        <div class="row">
+                            <a class="btn btn-sm" (click)="incrementDeckCard(card, true)"><i class="glyphicon-plus"></i></a>
+                            <h4>{{card.numberInSideboard}}</h4>
+                            <a class="btn btn-sm" (click)="decrementDeckCard(card, true)"><i class="glyphicon-minus"></i></a>
+                        </div>
+                    </td>
+                    <td><a style="float:left;text-decoration:none;" (click)="setSearchQuery(card.cardName)"><h4>{{card.cardName}}</h4></a></td>
+                    <td>
+                        <div style="transform:translateY(-2px);">
+                            <mana-cost [mana]="card.mana_Cost"></mana-cost>
+                        </div>
+                    </td>
+                    <!--<td>{{card.card_Text}}</td>-->
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row" *ngIf="_deckService.selectedDeck.name != ' '" >
+    <div class="col">
+        <button class="form-control btn btn-primary" style="max-width:150px;" (click)="showRandomHand(_deckService.selectedDeck)">Generate Random Hand</button>
+    </div>
+    <div class="col" *ngFor="let card of _deckService.randomHand">
+        <!--*ngIf="_deckService.showHand"-->
+        <div class="card">
+            <div class="card-img-top">
+                <img class="card-img-top" style="background-color:transparent;" src={{card.image_Normal}} alt="Card image cap">
+            </div>
+            <!--<div class="card-body">
+            <div class="row" style="margin-left:1%;">
+                <h5 class="card-title">{{card.name}}</h5>
+            </div>
+            <div class="row" style="margin-left:2%;">
+                <mana-cost style="margin-right:10px;" [mana]="card.mana_Cost"></mana-cost>
+                <h4 style="margin-top: 4px;"> ${{card.price}}</h4>
+            </div>
+            <div class="row" style="margin-left:2%;">
+                <h2 style="margin-top: 4px;">
+                    <a (click)="incrementCardCount(card)" class="btn btn-default btn-circle">+</a>
+                    {{ card.numberInCollection }}
+                    <a (click)="decrementCardCount(card)" class="btn btn-default btn-circle">&nbsp;-&nbsp;</a>
+                </h2>
+            </div>
+        </div>-->
+        </div>
+    </div>
+</div>
+
+<div class="row" *ngIf="_deckService.selectedDeck.name != ' '">
+    <div class="col-md-3">
+        <h2>New Game Result</h2>
+    </div>
+</div>
+<div class="row" *ngIf="_deckService.selectedDeck.name != ' '">
+    <div class="col-md-1">
+        <select class="form-control" [(ngModel)]="_deckService.deckTrackerRow.playedAgainst" placeholder="Played Against">
+            <option selected="selected" >Played Against</option>
+            <option *ngFor="let metaDeck of _deckService.metaDecks">{{metaDeck.deckTypeName}}</option>
+            <option value="AddNewMetaDeck">Add New MetaDeck</option>
+        </select>
+    </div>
+    <div class="col-md-1">
+        <select class="form-control" [(ngModel)]="_deckService.deckTrackerRow.format">
+            <option>Bo3</option>
+            <option>Bo1</option>
+        </select>
+    </div>
+    <div class="col-md-1">
+        <select class="form-control" [(ngModel)]="_deckService.deckTrackerRow.result">
+            <option>Win</option>
+            <option>Loss</option>
+        </select>
+    </div>
+    <div class="col-md-1">
+        <input class="form-control" type="text" [(ngModel)]="_deckService.deckTrackerRow.rank" placeholder="Current Rank"/>
+    </div>
+    <div class="col-md-6">
+        <textarea cols="80" type="text" class="form-control" placeholder="Notes" [(ngModel)]="_deckService.deckTrackerRow.notes"></textarea>
+    </div>
+    <div class="col-md-1">
+        <button class="btn btn-secondary" (disabled)="metaDeck.deckTypeName = ''" (click)="_deckService.addDeckTrackerRow()">Submit Result</button>
+    </div>
+</div>
+
+<div class="row" *ngIf="_deckService.deckTrackerRow.playedAgainst == 'AddNewMetaDeck'">
+    <div class="col-md-1">
+        <input class="form-control" type="text" placeholder="Meta Deck Name" [(ngModel)]="newMetaDeck.deckTypeName"/>
+    </div>
+    <div class="col-md-1">
+        <button class="btn btn-secondary" (disabled)="newMetaDeck.deckTypeName == ''" (click)="addMetaDeck()">Submit New Meta</button>
+    </div>
+</div>
+
+<div class="row" style="max-height:300px;overflow:auto;">
+    <div class="col-md-12" >
+        <table class="table table-striped" *ngIf="_deckService.selectedDeck.name != ' '"> 
+            <thead>
+                <tr>
+                    <th>Played</th>
+                    <th>Format</th>
+                    <th>Result</th>
+                    <th>Notes</th>
+                    <th>TimeStamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let record of _deckService.selectedDeck.trackerRows | trackerRowSort; let i = index">
+                    <td>{{record.playedAgainst}}</td>
+                    <td>{{record.format}}</td>
+                    <td>{{record.result}}</td>
+                    <td>{{record.notes}}</td>
+                    <td>{{record.rowKey}}</td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+</div>
