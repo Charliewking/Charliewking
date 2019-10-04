@@ -1,2 +1,0 @@
-# Charliewking
-My Resume Website
